@@ -1,13 +1,12 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import Header from "@/components/header"
 
 interface OrgBook {
-  id: number
+  bookListingID: number
   isbn: string
   title: string
   author: string
@@ -15,137 +14,272 @@ interface OrgBook {
   condition: string
   edition: string
   description: string
-  picture?: string
+  photoURLs?: string
   quantity: number
-  lendPrice: number
-  status?: "available" | "in-progress" | "sold"
+  availableQuantity: number
+  availabilityStatus: string
+  isSellable: boolean
+  isSwappable: boolean
+  city?: string
+  categoryID?: number
+}
+
+interface Order {
+  orderID: number
+  bookTitle: string
+  buyerName: string
+  totalPrice: number
+  orderStatus: string
+  orderDate: string
 }
 
 export default function OrgDashboardPage() {
+  const [userId, setUserId] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState<"books" | "sold">("books")
-  const [books, setBooks] = useState<OrgBook[]>([
-    {
-      id: 1,
-      isbn: "978-0-7432-7356-5",
-      title: "The Great Gatsby",
-      author: "F. Scott Fitzgerald",
-      price: 12.99,
-      condition: "Good",
-      edition: "1st Edition",
-      description: "A classic American novel about wealth and love.",
-      quantity: 5,
-      lendPrice: 2.99,
-    },
-  ])
+  const [books, setBooks] = useState<OrgBook[]>([])
+  const [soldOrders, setSoldOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
   const [showForm, setShowForm] = useState(false)
   const [newBook, setNewBook] = useState({
     isbn: "",
     title: "",
     author: "",
     price: "",
-    condition: "",
+    condition: "Good",
     edition: "",
     description: "",
-    picture: "",
-    quantity: "",
-    lendPrice: "",
+    photoURLs: "",
+    quantity: "1",
+    city: "",
+    categoryID: 1,
   })
 
   const [editingBook, setEditingBook] = useState<OrgBook | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
-  const [editFormData, setEditFormData] = useState<OrgBook | null>(null)
 
-  const handleAddBook = (e: React.FormEvent) => {
+  // Decode JWT token to get user ID
+  useEffect(() => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token')
+    console.log("Token found:", token ? "Yes" : "No")
+    
+    if (!token) {
+      setError("No authentication token found. Please login.")
+      return
+    }
+
+    try {
+      // Decode JWT token (format: header.payload.signature)
+      const payload = token.split('.')[1]
+      const decodedPayload = JSON.parse(atob(payload))
+      console.log("Decoded JWT payload:", decodedPayload)
+      
+      // Extract user ID from token (adjust the key based on your JWT structure)
+      // Common keys: sub, userId, id, nameid
+      const uid = decodedPayload.sub || decodedPayload.userId || decodedPayload.id || decodedPayload.nameid
+      console.log("Extracted user ID:", uid)
+      
+      if (uid) {
+        setUserId(parseInt(uid))
+      } else {
+        console.error("Available keys in token:", Object.keys(decodedPayload))
+        setError("User ID not found in token. Check console for available keys.")
+      }
+    } catch (err) {
+      console.error("Error decoding token:", err)
+      setError("Invalid authentication token")
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!userId) return
+    if (activeTab === "books") {
+      fetchMyBooks()
+    } else if (activeTab === "sold") {
+      fetchSoldOrders()
+    }
+  }, [activeTab, userId])
+
+  const fetchMyBooks = async () => {
+    if (!userId) return
+    setLoading(true)
+    setError("")
+    try {
+      const res = await fetch(`http://localhost:5279/api/User/${userId}/listings`)
+      if (!res.ok) throw new Error("Failed to fetch books")
+      const data = await res.json()
+      setBooks(data)
+    } catch (err: any) {
+      console.error(err)
+      setError(err.message || "Server error")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchSoldOrders = async () => {
+    if (!userId) return
+    setLoading(true)
+    setError("")
+    try {
+      const res = await fetch(`http://localhost:5279/api/User/${userId}/orders/incoming`)
+      if (!res.ok) throw new Error("Failed to fetch orders")
+      const data = await res.json()
+      // Filter for completed/sold orders
+      setSoldOrders(data.filter((order: Order) => 
+        order.orderStatus === "Completed" || order.orderStatus === "Delivered"
+      ))
+    } catch (err: any) {
+      console.error(err)
+      setError(err.message || "Server error")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleAddBook = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (newBook.isbn && newBook.title && newBook.author && newBook.price && newBook.condition && newBook.lendPrice) {
-      setBooks([
-        ...books,
-        {
-          id: books.length + 1,
-          isbn: newBook.isbn,
-          title: newBook.title,
-          author: newBook.author,
-          price: Number.parseFloat(newBook.price),
-          condition: newBook.condition,
-          edition: newBook.edition,
-          description: newBook.description,
-          picture: newBook.picture,
-          quantity: Number.parseInt(newBook.quantity) || 1,
-          lendPrice: Number.parseFloat(newBook.lendPrice),
-        },
-      ])
+    if (!userId) {
+      setError("User not authenticated")
+      return
+    }
+    setLoading(true)
+    setError("")
+
+    try {
+      const createDto = {
+        isbn: newBook.isbn,
+        title: newBook.title,
+        author: newBook.author,
+        price: parseFloat(newBook.price),
+        condition: newBook.condition,
+        edition: newBook.edition,
+        description: newBook.description,
+        photoURLs: newBook.photoURLs,
+        city: newBook.city,
+        categoryID: newBook.categoryID,
+        isSellable: true,
+        isSwappable: false,
+        quantity: parseInt(newBook.quantity) || 1,
+      }
+
+      const res = await fetch(`http://localhost:5279/api/User/${userId}/listings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(createDto),
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.message || "Failed to create listing")
+      }
+
       setNewBook({
         isbn: "",
         title: "",
         author: "",
         price: "",
-        condition: "",
+        condition: "Good",
         edition: "",
         description: "",
-        picture: "",
-        quantity: "",
-        lendPrice: "",
+        photoURLs: "",
+        quantity: "1",
+        city: "",
+        categoryID: 1,
       })
       setShowForm(false)
+      await fetchMyBooks()
+    } catch (err: any) {
+      console.error(err)
+      setError(err.message || "Failed to create listing")
+    } finally {
+      setLoading(false)
     }
   }
 
   const handleEditClick = (book: OrgBook) => {
-    setEditingBook(book)
-    setEditFormData({ ...book })
+    setEditingBook({ ...book })
     setShowEditModal(true)
   }
 
-  const handleUpdateBook = () => {
-    if (editFormData) {
-      setBooks(books.map((book) => (book.id === editFormData.id ? editFormData : book)))
+  const handleUpdateBook = async () => {
+    if (!editingBook || !userId) return
+
+    setLoading(true)
+    setError("")
+    try {
+      const updateDto = {
+        bookListingID: editingBook.bookListingID,
+        title: editingBook.title,
+        author: editingBook.author,
+        isbn: editingBook.isbn,
+        price: editingBook.isSellable ? editingBook.price : null,
+        condition: editingBook.condition,
+        edition: editingBook.edition || "",
+        description: editingBook.description || "",
+        photoURLs: editingBook.photoURLs || "",
+        city: editingBook.city || "",
+        categoryID: editingBook.categoryID || 1,
+        isSellable: editingBook.isSellable,
+        isSwappable: editingBook.isSwappable,
+        quantity: editingBook.quantity || 1,
+        availabilityStatus: editingBook.availabilityStatus || "Available",
+      }
+
+      console.log("Updating book with data:", updateDto)
+
+      const res = await fetch(
+        `http://localhost:5279/api/User/${userId}/listings/${editingBook.bookListingID}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updateDto),
+        }
+      )
+
+      if (!res.ok) {
+        const errorText = await res.text()
+        console.error("Update error response:", errorText)
+        let errorMessage = "Failed to update book"
+        try {
+          const errorData = JSON.parse(errorText)
+          errorMessage = errorData.message || errorMessage
+        } catch {
+          errorMessage = errorText || errorMessage
+        }
+        throw new Error(errorMessage)
+      }
+
       setShowEditModal(false)
       setEditingBook(null)
-      setEditFormData(null)
+      await fetchMyBooks()
+    } catch (err: any) {
+      console.error("Update error:", err)
+      setError(err.message || "Failed to update book")
+    } finally {
+      setLoading(false)
     }
   }
 
-  const soldBooks: OrgBook[] = [
-    {
-      id: 101,
-      isbn: "978-0-547-92807-6",
-      title: "The Hobbit",
-      author: "J.R.R. Tolkien",
-      price: 14.99,
-      condition: "Excellent",
-      edition: "Illustrated Edition",
-      description: "A fantasy adventure classic.",
-      quantity: 1,
-      lendPrice: 3.99,
-      status: "sold",
-    },
-    {
-      id: 102,
-      isbn: "978-1-451-67380-1",
-      title: "Fahrenheit 451",
-      author: "Ray Bradbury",
-      price: 10.99,
-      condition: "Good",
-      edition: "2nd Edition",
-      description: "A dystopian novel about censorship.",
-      quantity: 2,
-      lendPrice: 2.49,
-      status: "sold",
-    },
-  ]
+  const handleDeleteBook = async (bookId: number) => {
+    if (!userId || !confirm("Are you sure you want to delete this listing?")) return
 
-  const handlePictureUpload = (e: React.ChangeEvent<HTMLInputElement>, isEdit = false) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        if (isEdit) {
-          setEditFormData({ ...editFormData!, picture: reader.result as string })
-        } else {
-          setNewBook({ ...newBook, picture: reader.result as string })
-        }
-      }
-      reader.readAsDataURL(file)
+    setLoading(true)
+    setError("")
+    try {
+      const res = await fetch(
+        `http://localhost:5279/api/User/${userId}/listings/${bookId}`,
+        { method: "DELETE" }
+      )
+
+      if (!res.ok) throw new Error("Failed to delete book")
+
+      await fetchMyBooks()
+    } catch (err: any) {
+      console.error(err)
+      setError(err.message || "Failed to delete book")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -162,6 +296,12 @@ export default function OrgDashboardPage() {
             </Button>
           )}
         </div>
+
+        {error && (
+          <div className="bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
 
         <div className="flex gap-4 mb-8 border-b border-border">
           <button
@@ -255,7 +395,6 @@ export default function OrgDashboardPage() {
                     className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                     required
                   >
-                    <option value="">Select condition</option>
                     <option value="Like New">Like New</option>
                     <option value="Excellent">Excellent</option>
                     <option value="Good">Good</option>
@@ -275,6 +414,16 @@ export default function OrgDashboardPage() {
                 </div>
               </div>
               <div>
+                <label className="block text-sm font-medium mb-2">City</label>
+                <input
+                  type="text"
+                  value={newBook.city}
+                  onChange={(e) => setNewBook({ ...newBook, city: e.target.value })}
+                  placeholder="Enter city"
+                  className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-medium mb-2">Description</label>
                 <textarea
                   value={newBook.description}
@@ -284,47 +433,29 @@ export default function OrgDashboardPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Picture</label>
+                <label className="block text-sm font-medium mb-2">Photo URL</label>
                 <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handlePictureUpload(e)}
+                  type="text"
+                  value={newBook.photoURLs}
+                  onChange={(e) => setNewBook({ ...newBook, photoURLs: e.target.value })}
+                  placeholder="Enter photo filename (e.g., book1.jpg)"
                   className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                 />
-                {newBook.picture && (
-                  <img
-                    src={newBook.picture || "/placeholder.svg"}
-                    alt="Preview"
-                    className="mt-4 h-40 w-32 object-cover rounded-lg border border-input"
-                  />
-                )}
               </div>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Quantity</label>
-                  <input
-                    type="number"
-                    value={newBook.quantity}
-                    onChange={(e) => setNewBook({ ...newBook, quantity: e.target.value })}
-                    placeholder="1"
-                    className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Lend Price</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={newBook.lendPrice}
-                    onChange={(e) => setNewBook({ ...newBook, lendPrice: e.target.value })}
-                    placeholder="0.00"
-                    className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Quantity <span className="text-red-500">*</span></label>
+                <input
+                  type="number"
+                  value={newBook.quantity}
+                  onChange={(e) => setNewBook({ ...newBook, quantity: e.target.value })}
+                  placeholder="1"
+                  min="1"
+                  className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                />
               </div>
-              <Button type="submit" className="bg-primary hover:bg-primary/90">
-                Add Book
+              <Button type="submit" className="bg-primary hover:bg-primary/90" disabled={loading}>
+                {loading ? "Adding..." : "Add Book"}
               </Button>
             </form>
           </div>
@@ -332,123 +463,166 @@ export default function OrgDashboardPage() {
 
         {activeTab === "books" && (
           <div className="bg-card border border-border rounded-lg overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-secondary border-b border-border">
-                <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">ISBN</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Title</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Author</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Price</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Condition</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Quantity</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {books.map((book) => (
-                  <tr key={book.id} className="border-b border-border hover:bg-secondary transition">
-                    <td className="px-6 py-4 text-sm">{book.isbn}</td>
-                    <td className="px-6 py-4">{book.title}</td>
-                    <td className="px-6 py-4">{book.author}</td>
-                    <td className="px-6 py-4">${book.price.toFixed(2)}</td>
-                    <td className="px-6 py-4">{book.condition}</td>
-                    <td className="px-6 py-4">{book.quantity}</td>
-                    <td className="px-6 py-4">
-                      <Button onClick={() => handleEditClick(book)} variant="outline" size="sm">
-                        Edit
-                      </Button>
-                    </td>
+            {loading ? (
+              <div className="p-8 text-center">Loading books...</div>
+            ) : books.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                No books in collection yet. Add your first book!
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead className="bg-secondary border-b border-border">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Cover</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">ISBN</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Title</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Author</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Price</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Condition</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Quantity</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Available</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {books.map((book) => (
+                    <tr key={book.bookListingID} className="border-b border-border hover:bg-secondary transition">
+                      <td className="px-6 py-4">
+                        {book.photoURLs ? (
+                          <img
+                            src={`http://localhost:5279/images/${book.photoURLs}`}
+                            alt={book.title}
+                            className="h-16 w-12 object-cover rounded"
+                          />
+                        ) : (
+                          <span className="text-2xl">📚</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm">{book.isbn}</td>
+                      <td className="px-6 py-4">{book.title}</td>
+                      <td className="px-6 py-4">{book.author}</td>
+                      <td className="px-6 py-4">${book.price.toFixed(2)}</td>
+                      <td className="px-6 py-4">{book.condition}</td>
+                      <td className="px-6 py-4">{book.quantity}</td>
+                      <td className="px-6 py-4">{book.availableQuantity}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2" >
+                          <Button onClick={() => handleEditClick(book)} variant="outline" size="sm">
+                            Edit
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteBook(book.bookListingID)}
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         )}
 
         {activeTab === "sold" && (
           <div className="bg-card border border-border rounded-lg overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-secondary border-b border-border">
-                <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">ISBN</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Title</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Author</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Price</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Condition</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Quantity Sold</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {soldBooks.map((book) => (
-                  <tr key={book.id} className="border-b border-border hover:bg-secondary transition">
-                    <td className="px-6 py-4 text-sm">{book.isbn}</td>
-                    <td className="px-6 py-4">{book.title}</td>
-                    <td className="px-6 py-4">{book.author}</td>
-                    <td className="px-6 py-4">${book.price.toFixed(2)}</td>
-                    <td className="px-6 py-4">{book.condition}</td>
-                    <td className="px-6 py-4">{book.quantity}</td>
-                    <td className="px-6 py-4">
-                      <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                        Sold
-                      </span>
-                    </td>
+            {loading ? (
+              <div className="p-8 text-center">Loading sold orders...</div>
+            ) : soldOrders.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                No sold books yet.
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead className="bg-secondary border-b border-border">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Order ID</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Book Title</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Buyer</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Price</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Date</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {soldOrders.map((order) => (
+                    <tr key={order.orderID} className="border-b border-border hover:bg-secondary transition">
+                      <td className="px-6 py-4 text-sm">#{order.orderID}</td>
+                      <td className="px-6 py-4">{order.bookTitle}</td>
+                      <td className="px-6 py-4">{order.buyerName}</td>
+                      <td className="px-6 py-4">${order.totalPrice.toFixed(2)}</td>
+                      <td className="px-6 py-4">{new Date(order.orderDate).toLocaleDateString()}</td>
+                      <td className="px-6 py-4">
+                        <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                          {order.orderStatus}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         )}
 
-        {showEditModal && editFormData && (
+        {showEditModal && editingBook && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div className="bg-card border border-border rounded-lg max-w-2xl w-full p-6 my-8">
+            <div className="bg-card border border-border rounded-lg max-w-2xl w-full p-6 my-8 max-h-[90vh] overflow-y-auto">
               <h2 className="text-2xl font-bold mb-6">Edit Book</h2>
               <form className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">ISBN</label>
+                    <label className="block text-sm font-medium mb-2">ISBN *</label>
                     <input
                       type="text"
-                      value={editFormData.isbn}
-                      onChange={(e) => setEditFormData({ ...editFormData, isbn: e.target.value })}
+                      value={editingBook.isbn}
+                      onChange={(e) => setEditingBook({ ...editingBook, isbn: e.target.value })}
                       className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Book Title</label>
+                    <label className="block text-sm font-medium mb-2">Book Title *</label>
                     <input
                       type="text"
-                      value={editFormData.title}
-                      onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                      value={editingBook.title}
+                      onChange={(e) => setEditingBook({ ...editingBook, title: e.target.value })}
                       className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Author</label>
+                    <label className="block text-sm font-medium mb-2">Author *</label>
                     <input
                       type="text"
-                      value={editFormData.author}
-                      onChange={(e) => setEditFormData({ ...editFormData, author: e.target.value })}
+                      value={editingBook.author}
+                      onChange={(e) => setEditingBook({ ...editingBook, author: e.target.value })}
                       className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Price</label>
+                    <label className="block text-sm font-medium mb-2">Price *</label>
                     <input
                       type="number"
                       step="0.01"
-                      value={editFormData.price}
-                      onChange={(e) => setEditFormData({ ...editFormData, price: Number.parseFloat(e.target.value) })}
+                      value={editingBook.price}
+                      onChange={(e) => setEditingBook({ ...editingBook, price: parseFloat(e.target.value) || 0 })}
                       className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Condition</label>
+                    <label className="block text-sm font-medium mb-2">Condition *</label>
                     <select
-                      value={editFormData.condition}
-                      onChange={(e) => setEditFormData({ ...editFormData, condition: e.target.value })}
+                      value={editingBook.condition}
+                      onChange={(e) => setEditingBook({ ...editingBook, condition: e.target.value })}
                       className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
                     >
                       <option value="Like New">Like New</option>
                       <option value="Excellent">Excellent</option>
@@ -461,73 +635,91 @@ export default function OrgDashboardPage() {
                     <label className="block text-sm font-medium mb-2">Edition</label>
                     <input
                       type="text"
-                      value={editFormData.edition}
-                      onChange={(e) => setEditFormData({ ...editFormData, edition: e.target.value })}
+                      value={editingBook.edition || ""}
+                      onChange={(e) => setEditingBook({ ...editingBook, edition: e.target.value })}
                       className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">City</label>
+                  <input
+                    type="text"
+                    value={editingBook.city || ""}
+                    onChange={(e) => setEditingBook({ ...editingBook, city: e.target.value })}
+                    className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Description</label>
                   <textarea
-                    value={editFormData.description}
-                    onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                    value={editingBook.description || ""}
+                    onChange={(e) => setEditingBook({ ...editingBook, description: e.target.value })}
                     className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary h-20 resize-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Picture</label>
+                  <label className="block text-sm font-medium mb-2">Photo URL</label>
                   <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handlePictureUpload(e, true)}
+                    type="text"
+                    value={editingBook.photoURLs || ""}
+                    onChange={(e) => setEditingBook({ ...editingBook, photoURLs: e.target.value })}
+                    placeholder="Enter photo filename"
                     className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                   />
-                  {editFormData.picture && (
-                    <img
-                      src={editFormData.picture || "/placeholder.svg"}
-                      alt="Preview"
-                      className="mt-4 h-40 w-32 object-cover rounded-lg border border-input"
-                    />
-                  )}
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Quantity</label>
+                    <label className="block text-sm font-medium mb-2">Quantity *</label>
                     <input
                       type="number"
-                      value={editFormData.quantity}
-                      onChange={(e) => setEditFormData({ ...editFormData, quantity: Number.parseInt(e.target.value) })}
+                      value={editingBook.quantity}
+                      onChange={(e) => setEditingBook({ ...editingBook, quantity: parseInt(e.target.value) || 1 })}
+                      min="1"
                       className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Lend Price</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={editFormData.lendPrice}
-                      onChange={(e) =>
-                        setEditFormData({ ...editFormData, lendPrice: Number.parseFloat(e.target.value) })
-                      }
+                    <label className="block text-sm font-medium mb-2">Status</label>
+                    <select
+                      value={editingBook.availabilityStatus}
+                      onChange={(e) => setEditingBook({ ...editingBook, availabilityStatus: e.target.value })}
                       className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
+                    >
+                      <option value="Available">Available</option>
+                      <option value="Sold">Sold</option>
+                      <option value="Reserved">Reserved</option>
+                    </select>
                   </div>
                 </div>
+
+                {error && (
+                  <div className="bg-red-100 border border-red-300 text-red-800 px-4 py-2 rounded-lg text-sm">
+                    {error}
+                  </div>
+                )}
+
                 <div className="flex gap-3">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => {
                       setShowEditModal(false)
-                      setEditFormData(null)
+                      setEditingBook(null)
+                      setError("")
                     }}
                     className="flex-1 bg-transparent"
                   >
                     Cancel
                   </Button>
-                  <Button type="button" onClick={handleUpdateBook} className="flex-1 bg-primary hover:bg-primary/90">
-                    Update
+                  <Button
+                    type="button"
+                    onClick={handleUpdateBook}
+                    className="flex-1 bg-primary hover:bg-primary/90"
+                    disabled={loading}
+                  >
+                    {loading ? "Updating..." : "Update"}
                   </Button>
                 </div>
               </form>
