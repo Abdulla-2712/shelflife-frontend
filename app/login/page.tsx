@@ -31,10 +31,19 @@ export default function LoginPage() {
       if (response.ok) {
         // Store JWT or session token if your backend returns one
         localStorage.setItem("token", result.token)
+        localStorage.setItem("userType", result.user.userType)
+
         alert("Login successful!")
         console.log(result)
         // Redirect to dashboard or homepage
-        window.location.href = "/dashboard"
+        const userType = result.user.userType
+        if (userType === 'NORMAL_USER'){
+          window.location.href = "/dashboard"
+        }
+        if (userType === 'BUSINESS'){
+          window.location.href = "/org-dashboard"
+        }
+
       } else {
         alert(result.message || "Login failed")
       }
