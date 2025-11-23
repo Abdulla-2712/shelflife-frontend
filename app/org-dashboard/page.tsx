@@ -28,18 +28,25 @@ interface Order {
   orderID: number
   bookTitle: string
   buyerName: string
+  sellerName: string
+  buyerID?: number
+  sellerID?: number
   totalPrice: number
   orderStatus: string
   orderDate: string
+  buyerConfirmed?: boolean
+  sellerConfirmed?: boolean
 }
 
 export default function OrgDashboardPage() {
   const [userId, setUserId] = useState<number | null>(null)
-  const [activeTab, setActiveTab] = useState<"books" | "sold">("books")
+  const [activeTab, setActiveTab] = useState<"books" | "incoming" | "sold">("books")
   const [books, setBooks] = useState<OrgBook[]>([])
+  const [incomingOrders, setIncomingOrders] = useState<Order[]>([])
   const [soldOrders, setSoldOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [newBook, setNewBook] = useState({
     isbn: "",
@@ -57,33 +64,27 @@ export default function OrgDashboardPage() {
 
   const [editingBook, setEditingBook] = useState<OrgBook | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [token, setToken] = useState<string | null>(null)
 
   // Decode JWT token to get user ID
   useEffect(() => {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token')
-    console.log("Token found:", token ? "Yes" : "No")
-    
-    if (!token) {
+    const storedToken = localStorage.getItem("token") || sessionStorage.getItem("token")
+    setToken(storedToken)
+
+    if (!storedToken) {
       setError("No authentication token found. Please login.")
       return
     }
 
     try {
-      // Decode JWT token (format: header.payload.signature)
-      const payload = token.split('.')[1]
+      const payload = storedToken.split(".")[1]
       const decodedPayload = JSON.parse(atob(payload))
-      console.log("Decoded JWT payload:", decodedPayload)
-      
-      // Extract user ID from token (adjust the key based on your JWT structure)
-      // Common keys: sub, userId, id, nameid
       const uid = decodedPayload.sub || decodedPayload.userId || decodedPayload.id || decodedPayload.nameid
-      console.log("Extracted user ID:", uid)
-      
+
       if (uid) {
-        setUserId(parseInt(uid))
+        setUserId(Number.parseInt(uid))
       } else {
-        console.error("Available keys in token:", Object.keys(decodedPayload))
-        setError("User ID not found in token. Check console for available keys.")
+        setError("User ID not found in token")
       }
     } catch (err) {
       console.error("Error decoding token:", err)
@@ -95,6 +96,8 @@ export default function OrgDashboardPage() {
     if (!userId) return
     if (activeTab === "books") {
       fetchMyBooks()
+    } else if (activeTab === "incoming") {
+      fetchIncomingOrders()
     } else if (activeTab === "sold") {
       fetchSoldOrders()
     }
@@ -116,26 +119,85 @@ export default function OrgDashboardPage() {
       setLoading(false)
     }
   }
-
-  const fetchSoldOrders = async () => {
-    if (!userId) return
-    setLoading(true)
-    setError("")
-    try {
-      const res = await fetch(`http://localhost:5279/api/User/${userId}/orders/incoming`)
-      if (!res.ok) throw new Error("Failed to fetch orders")
-      const data = await res.json()
-      // Filter for completed/sold orders
-      setSoldOrders(data.filter((order: Order) => 
-        order.orderStatus === "Completed" || order.orderStatus === "Delivered"
-      ))
-    } catch (err: any) {
-      console.error(err)
-      setError(err.message || "Server error")
-    } finally {
-      setLoading(false)
-    }
+const fetchIncomingOrders = async () => {
+  if (!userId || !token) return
+  setLoading(true)
+  setError("")
+  try {
+    const res = await fetch(`http://localhost:5279/api/Orders/incoming/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    })
+    if (!res.ok) throw new Error("Failed to fetch orders")
+    const data = await res.json()
+    const mappedOrders = data.map((order: any) => ({
+      orderID: order.orderId || order.orderID || 0,
+      bookTitle: order.bookTitle || order.listingTitle || "Unknown Book",
+      buyerName: order.buyerName || order.buyerUsername || "Unknown Buyer",
+      sellerName: order.sellerName || order.sellerUsername || "Unknown Seller",
+      buyerID: order.buyerID || order.buyerId,
+      sellerID: order.sellerID || order.sellerId,
+      totalPrice: order.totalPrice || order.amount || 0,
+      orderStatus: order.status || order.orderStatus || "Pending",
+      orderDate: order.orderDate || order.createdAt || new Date().toISOString(),
+      buyerConfirmed: order.buyerConfirmed || false,
+      sellerConfirmed: order.sellerConfirmed || false,
+    }))
+    
+    // Filter OUT completed orders from incoming orders
+    setIncomingOrders(
+      mappedOrders.filter((order: Order) => order.orderStatus !== "COMPLETED")
+    )
+  } catch (err: any) {
+    console.error(err)
+    setError(err.message || "Server error")
+  } finally {
+    setLoading(false)
   }
+}
+
+const fetchSoldOrders = async () => {
+  if (!userId || !token) return
+  setLoading(true)
+  setError("")
+  try {
+    const res = await fetch(`http://localhost:5279/api/Orders/incoming/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    })
+    if (!res.ok) throw new Error("Failed to fetch orders")
+    const data = await res.json()
+    
+    // Map the orders first (same as fetchIncomingOrders)
+    const mappedOrders = data.map((order: any) => ({
+      orderID: order.orderId || order.orderID || 0,
+      bookTitle: order.bookTitle || order.listingTitle || "Unknown Book",
+      buyerName: order.buyerName || order.buyerUsername || "Unknown Buyer",
+      sellerName: order.sellerName || order.sellerUsername || "Unknown Seller",
+      buyerID: order.buyerID || order.buyerId,
+      sellerID: order.sellerID || order.sellerId,
+      totalPrice: order.totalPrice || order.amount || 0,
+      orderStatus: order.status || order.orderStatus || "Pending",
+      orderDate: order.orderDate || order.createdAt || new Date().toISOString(),
+      buyerConfirmed: order.buyerConfirmed || false,
+      sellerConfirmed: order.sellerConfirmed || false,
+    }))
+    
+    // Filter for COMPLETED orders (case-sensitive)
+    setSoldOrders(
+      mappedOrders.filter((order: Order) => order.orderStatus === "COMPLETED")
+    )
+  } catch (err: any) {
+    console.error(err)
+    setError(err.message || "Server error")
+  } finally {
+    setLoading(false)
+  }
+}
 
   const handleAddBook = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -151,7 +213,7 @@ export default function OrgDashboardPage() {
         isbn: newBook.isbn,
         title: newBook.title,
         author: newBook.author,
-        price: parseFloat(newBook.price),
+        price: Number.parseFloat(newBook.price),
         condition: newBook.condition,
         edition: newBook.edition,
         description: newBook.description,
@@ -160,7 +222,7 @@ export default function OrgDashboardPage() {
         categoryID: newBook.categoryID,
         isSellable: true,
         isSwappable: false,
-        quantity: parseInt(newBook.quantity) || 1,
+        quantity: Number.parseInt(newBook.quantity) || 1,
       }
 
       const res = await fetch(`http://localhost:5279/api/User/${userId}/listings`, {
@@ -228,14 +290,11 @@ export default function OrgDashboardPage() {
 
       console.log("Updating book with data:", updateDto)
 
-      const res = await fetch(
-        `http://localhost:5279/api/User/${userId}/listings/${editingBook.bookListingID}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updateDto),
-        }
-      )
+      const res = await fetch(`http://localhost:5279/api/User/${userId}/listings/${editingBook.bookListingID}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updateDto),
+      })
 
       if (!res.ok) {
         const errorText = await res.text()
@@ -267,10 +326,7 @@ export default function OrgDashboardPage() {
     setLoading(true)
     setError("")
     try {
-      const res = await fetch(
-        `http://localhost:5279/api/User/${userId}/listings/${bookId}`,
-        { method: "DELETE" }
-      )
+      const res = await fetch(`http://localhost:5279/api/User/${userId}/listings/${bookId}`, { method: "DELETE" })
 
       if (!res.ok) throw new Error("Failed to delete book")
 
@@ -280,6 +336,61 @@ export default function OrgDashboardPage() {
       setError(err.message || "Failed to delete book")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const markAsDelivering = async (orderId: number) => {
+    if (!token) return
+    setUpdatingOrderId(orderId)
+    try {
+      const res = await fetch(`http://localhost:5279/api/Orders/${orderId}/mark-delivering`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+      if (!res.ok) throw new Error("Failed to update order")
+      await fetchIncomingOrders()
+    } catch (err: any) {
+      setError(err.message || "Failed to update order")
+    } finally {
+      setUpdatingOrderId(null)
+    }
+  }
+
+  const confirmDeliverySeller = async (orderId: number) => {
+    if (!token) return
+    setUpdatingOrderId(orderId)
+    try {
+      const res = await fetch(`http://localhost:5279/api/Orders/${orderId}/confirm-delivery-seller`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+      if (!res.ok) throw new Error("Failed to confirm delivery")
+      await fetchIncomingOrders()
+    } catch (err: any) {
+      setError(err.message || "Failed to confirm delivery")
+    } finally {
+      setUpdatingOrderId(null)
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "ACCEPTED":
+        return "bg-blue-100 text-blue-800"
+      case "DELIVERING":
+        return "bg-yellow-100 text-yellow-800"
+      case "COMPLETED":
+        return "bg-green-100 text-green-800"
+      case "CANCELLED":
+        return "bg-red-100 text-red-800"
+      default:
+        return "bg-gray-100 text-gray-800"
     }
   }
 
@@ -298,9 +409,7 @@ export default function OrgDashboardPage() {
         </div>
 
         {error && (
-          <div className="bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-lg mb-6">
-            {error}
-          </div>
+          <div className="bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-lg mb-6">{error}</div>
         )}
 
         <div className="flex gap-4 mb-8 border-b border-border">
@@ -313,6 +422,16 @@ export default function OrgDashboardPage() {
             }`}
           >
             My Books
+          </button>
+          <button
+            onClick={() => setActiveTab("incoming")}
+            className={`px-4 py-2 font-medium border-b-2 transition ${
+              activeTab === "incoming"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Incoming Orders
           </button>
           <button
             onClick={() => setActiveTab("sold")}
@@ -443,7 +562,9 @@ export default function OrgDashboardPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Quantity <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium mb-2">
+                  Quantity <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="number"
                   value={newBook.quantity}
@@ -461,6 +582,7 @@ export default function OrgDashboardPage() {
           </div>
         )}
 
+        {/* My Books Tab */}
         {activeTab === "books" && (
           <div className="bg-card border border-border rounded-lg overflow-hidden">
             {loading ? (
@@ -506,7 +628,7 @@ export default function OrgDashboardPage() {
                       <td className="px-6 py-4">{book.quantity}</td>
                       <td className="px-6 py-4">{book.availableQuantity}</td>
                       <td className="px-6 py-4">
-                        <div className="flex gap-2" >
+                        <div className="flex gap-2">
                           <Button onClick={() => handleEditClick(book)} variant="outline" size="sm">
                             Edit
                           </Button>
@@ -528,14 +650,80 @@ export default function OrgDashboardPage() {
           </div>
         )}
 
+        {/* Incoming Orders Tab */}
+        {activeTab === "incoming" && (
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            {loading ? (
+              <div className="p-8 text-center">Loading incoming orders...</div>
+            ) : incomingOrders.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">No incoming orders yet.</div>
+            ) : (
+              <div className="space-y-4 p-6">
+                {incomingOrders.map((order) => (
+                  <div key={order.orderID} className="border border-border rounded-lg p-4">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="font-semibold text-lg">Order #{order.orderID}</h3>
+                        <p className="text-sm text-muted-foreground">{order.bookTitle}</p>
+                        <p className="text-sm text-muted-foreground">Buyer: {order.buyerName}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(order.orderDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold">${(order.totalPrice || 0).toFixed(2)}</p>
+                        <span
+                          className={`inline-block px-3 py-1 rounded-full text-sm font-medium mt-2 ${getStatusColor(order.orderStatus)}`}
+                        >
+                          {order.orderStatus}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 mt-4">
+                      {order.orderStatus === "ACCEPTED" && (
+                        <button
+                          onClick={() => markAsDelivering(order.orderID)}
+                          disabled={updatingOrderId === order.orderID}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
+                        >
+                          {updatingOrderId === order.orderID ? "Updating..." : "📦 Mark as Delivering"}
+                        </button>
+                      )}
+                      {order.orderStatus === "DELIVERING" && !order.sellerConfirmed && (
+                        <button
+                          onClick={() => confirmDeliverySeller(order.orderID)}
+                          disabled={updatingOrderId === order.orderID}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition"
+                        >
+                          {updatingOrderId === order.orderID ? "Confirming..." : "✓ Confirm Delivery"}
+                        </button>
+                      )}
+                      {order.orderStatus === "DELIVERING" && order.sellerConfirmed && !order.buyerConfirmed && (
+                        <div className="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg text-sm">
+                          ⏳ Waiting for buyer confirmation...
+                        </div>
+                      )}
+                      {order.orderStatus === "COMPLETED" && (
+                        <div className="px-4 py-2 bg-green-100 text-green-800 rounded-lg text-sm">
+                          ✓ Order completed
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Sold Books Tab */}
         {activeTab === "sold" && (
           <div className="bg-card border border-border rounded-lg overflow-hidden">
             {loading ? (
               <div className="p-8 text-center">Loading sold orders...</div>
             ) : soldOrders.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground">
-                No sold books yet.
-              </div>
+              <div className="p-8 text-center text-muted-foreground">No sold books yet.</div>
             ) : (
               <table className="w-full">
                 <thead className="bg-secondary border-b border-border">
@@ -569,160 +757,67 @@ export default function OrgDashboardPage() {
           </div>
         )}
 
+        {/* Edit Modal */}
         {showEditModal && editingBook && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div className="bg-card border border-border rounded-lg max-w-2xl w-full p-6 my-8 max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-card border border-border rounded-lg p-8 max-w-2xl w-full max-h-96 overflow-y-auto">
               <h2 className="text-2xl font-bold mb-6">Edit Book</h2>
-              <form className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">ISBN *</label>
-                    <input
-                      type="text"
-                      value={editingBook.isbn}
-                      onChange={(e) => setEditingBook({ ...editingBook, isbn: e.target.value })}
-                      className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Book Title *</label>
-                    <input
-                      type="text"
-                      value={editingBook.title}
-                      onChange={(e) => setEditingBook({ ...editingBook, title: e.target.value })}
-                      className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Author *</label>
-                    <input
-                      type="text"
-                      value={editingBook.author}
-                      onChange={(e) => setEditingBook({ ...editingBook, author: e.target.value })}
-                      className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Price *</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={editingBook.price}
-                      onChange={(e) => setEditingBook({ ...editingBook, price: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Condition *</label>
-                    <select
-                      value={editingBook.condition}
-                      onChange={(e) => setEditingBook({ ...editingBook, condition: e.target.value })}
-                      className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                      required
-                    >
-                      <option value="Like New">Like New</option>
-                      <option value="Excellent">Excellent</option>
-                      <option value="Good">Good</option>
-                      <option value="Fair">Fair</option>
-                      <option value="Poor">Poor</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Edition</label>
-                    <input
-                      type="text"
-                      value={editingBook.edition || ""}
-                      onChange={(e) => setEditingBook({ ...editingBook, edition: e.target.value })}
-                      className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
-                </div>
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">City</label>
+                  <label className="block text-sm font-medium mb-2">Title</label>
                   <input
                     type="text"
-                    value={editingBook.city || ""}
-                    onChange={(e) => setEditingBook({ ...editingBook, city: e.target.value })}
+                    value={editingBook.title}
+                    onChange={(e) => setEditingBook({ ...editingBook, title: e.target.value })}
                     className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Description</label>
-                  <textarea
-                    value={editingBook.description || ""}
-                    onChange={(e) => setEditingBook({ ...editingBook, description: e.target.value })}
-                    className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary h-20 resize-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Photo URL</label>
+                  <label className="block text-sm font-medium mb-2">Author</label>
                   <input
                     type="text"
-                    value={editingBook.photoURLs || ""}
-                    onChange={(e) => setEditingBook({ ...editingBook, photoURLs: e.target.value })}
-                    placeholder="Enter photo filename"
+                    value={editingBook.author}
+                    onChange={(e) => setEditingBook({ ...editingBook, author: e.target.value })}
                     className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Quantity *</label>
-                    <input
-                      type="number"
-                      value={editingBook.quantity}
-                      onChange={(e) => setEditingBook({ ...editingBook, quantity: parseInt(e.target.value) || 1 })}
-                      min="1"
-                      className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Status</label>
-                    <select
-                      value={editingBook.availabilityStatus}
-                      onChange={(e) => setEditingBook({ ...editingBook, availabilityStatus: e.target.value })}
-                      className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                    >
-                      <option value="Available">Available</option>
-                      <option value="Sold">Sold</option>
-                      <option value="Reserved">Reserved</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Price</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editingBook.price}
+                    onChange={(e) => setEditingBook({ ...editingBook, price: Number.parseFloat(e.target.value) })}
+                    className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
                 </div>
-
-                {error && (
-                  <div className="bg-red-100 border border-red-300 text-red-800 px-4 py-2 rounded-lg text-sm">
-                    {error}
-                  </div>
-                )}
-
-                <div className="flex gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setShowEditModal(false)
-                      setEditingBook(null)
-                      setError("")
-                    }}
-                    className="flex-1 bg-transparent"
-                  >
+                <div>
+                  <label className="block text-sm font-medium mb-2">Condition</label>
+                  <input
+                    type="text"
+                    value={editingBook.condition}
+                    onChange={(e) => setEditingBook({ ...editingBook, condition: e.target.value })}
+                    className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Quantity</label>
+                  <input
+                    type="number"
+                    value={editingBook.quantity}
+                    onChange={(e) => setEditingBook({ ...editingBook, quantity: Number.parseInt(e.target.value) })}
+                    className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div className="flex gap-2 pt-4">
+                  <Button onClick={handleUpdateBook} className="bg-primary hover:bg-primary/90" disabled={loading}>
+                    {loading ? "Saving..." : "Save Changes"}
+                  </Button>
+                  <Button onClick={() => setShowEditModal(false)} variant="outline">
                     Cancel
                   </Button>
-                  <Button
-                    type="button"
-                    onClick={handleUpdateBook}
-                    className="flex-1 bg-primary hover:bg-primary/90"
-                    disabled={loading}
-                  >
-                    {loading ? "Updating..." : "Update"}
-                  </Button>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         )}
