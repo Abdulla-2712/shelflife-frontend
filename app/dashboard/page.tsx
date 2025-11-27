@@ -422,31 +422,28 @@ export default function DashboardPage() {
         <div className="flex gap-2 mb-6 border-b border-border overflow-x-auto">
           <button
             onClick={() => setActiveTab("my-books")}
-            className={`px-4 py-2 font-medium border-b-2 transition whitespace-nowrap ${
-              activeTab === "my-books"
+            className={`px-4 py-2 font-medium border-b-2 transition whitespace-nowrap ${activeTab === "my-books"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
+              }`}
           >
             My Books
           </button>
           <button
             onClick={() => setActiveTab("sell")}
-            className={`px-4 py-2 font-medium border-b-2 transition whitespace-nowrap ${
-              activeTab === "sell"
+            className={`px-4 py-2 font-medium border-b-2 transition whitespace-nowrap ${activeTab === "sell"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
+              }`}
           >
             Sell a Book
           </button>
           <button
             onClick={() => setActiveTab("orders")}
-            className={`px-4 py-2 font-medium border-b-2 transition whitespace-nowrap ${
-              activeTab === "orders"
+            className={`px-4 py-2 font-medium border-b-2 transition whitespace-nowrap ${activeTab === "orders"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
+              }`}
           >
             My Orders
           </button>
@@ -658,21 +655,19 @@ export default function DashboardPage() {
             <div className="flex gap-4 mb-6 border-b border-border">
               <button
                 onClick={() => setActiveOrdersTab("incoming")}
-                className={`px-4 py-2 font-medium border-b-2 transition ${
-                  activeOrdersTab === "incoming"
+                className={`px-4 py-2 font-medium border-b-2 transition ${activeOrdersTab === "incoming"
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
+                  }`}
               >
                 Incoming Orders (Seller)
               </button>
               <button
                 onClick={() => setActiveOrdersTab("outgoing")}
-                className={`px-4 py-2 font-medium border-b-2 transition ${
-                  activeOrdersTab === "outgoing"
+                className={`px-4 py-2 font-medium border-b-2 transition ${activeOrdersTab === "outgoing"
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
+                  }`}
               >
                 Outgoing Orders (Buyer)
               </button>

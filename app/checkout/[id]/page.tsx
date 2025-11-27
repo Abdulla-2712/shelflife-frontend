@@ -34,7 +34,7 @@ export default function CheckoutPage() {
   const params = useParams()
   const router = useRouter()
   const bookId = Number(params.id)
-  
+
   const [book, setBook] = useState<Book | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -46,10 +46,10 @@ export default function CheckoutPage() {
   // Get logged-in user ID from JWT
   useEffect(() => {
     const token = localStorage.getItem("token") || sessionStorage.getItem("token")
-    
+
     console.log("=== TOKEN DEBUG ===")
     console.log("Token exists:", !!token)
-    
+
     if (!token) {
       setError("Please login to continue")
       setLoading(false)
@@ -59,18 +59,18 @@ export default function CheckoutPage() {
     try {
       const parts = token.split('.')
       console.log("Token parts:", parts.length)
-      
+
       if (parts.length !== 3) {
         throw new Error("Invalid token format")
       }
-      
+
       const payload = JSON.parse(atob(parts[1]))
       console.log("Token payload:", payload)
       console.log("Available claims:", Object.keys(payload))
-      
+
       const uid = payload.sub || payload.userId || payload.id || payload.nameid
       console.log("Extracted user ID:", uid)
-      
+
       if (uid) {
         setLoggedInUserId(parseInt(uid))
       } else {
@@ -117,104 +117,104 @@ export default function CheckoutPage() {
         setLoading(false)
       }
     }
-    
+
     if (loggedInUserId !== null) {
       fetchBook()
     }
   }, [bookId, loggedInUserId])
 
-const handleConfirmPurchase = async () => {
-  if (!book || !loggedInUserId) return
-  
-  // Check if user is trying to buy their own book
-  if (book.userID === loggedInUserId) {
-    setError("You cannot purchase your own book.")
-    return
-  }
+  const handleConfirmPurchase = async () => {
+    if (!book || !loggedInUserId) return
 
-  setIsProcessing(true)
-  setError("")
-  
-  try {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token")
-    
-    if (!token) {
-      throw new Error("Please login to continue. No authentication token found.")
+    // Check if user is trying to buy their own book
+    if (book.userID === loggedInUserId) {
+      setError("You cannot purchase your own book.")
+      return
     }
 
-    console.log("Creating order with token:", token ? "Token exists" : "No token")
-    console.log("Buyer ID:", loggedInUserId)
-    console.log("Listing ID:", book.bookListingID)
-    
-    // Create sale order
-    const res = await fetch(`http://localhost:5279/api/Orders/sale`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        ListingID: book.bookListingID,
-        Quantity: 1
-      }),
-    })
+    setIsProcessing(true)
+    setError("")
 
-    console.log("Order creation response status:", res.status)
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token")
 
-    if (!res.ok) {
-      let message = "Failed to create order"
-      const contentType = res.headers.get("content-type")
-      if (contentType?.includes("application/json")) {
-        const errData = await res.json()
-        message = errData.message || message
-        console.error("Error response:", errData)
-        
-        // ⭐ Handle specific error messages
-        if (message.includes("Not enough quantity available")) {
-          message = "Sorry, this book is no longer available."
+      if (!token) {
+        throw new Error("Please login to continue. No authentication token found.")
+      }
+
+      console.log("Creating order with token:", token ? "Token exists" : "No token")
+      console.log("Buyer ID:", loggedInUserId)
+      console.log("Listing ID:", book.bookListingID)
+
+      // Create sale order
+      const res = await fetch(`http://localhost:5279/api/Orders/sale`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ListingID: book.bookListingID,
+          Quantity: 1
+        }),
+      })
+
+      console.log("Order creation response status:", res.status)
+
+      if (!res.ok) {
+        let message = "Failed to create order"
+        const contentType = res.headers.get("content-type")
+        if (contentType?.includes("application/json")) {
+          const errData = await res.json()
+          message = errData.message || message
+          console.error("Error response:", errData)
+
+          // ⭐ Handle specific error messages
+          if (message.includes("Not enough quantity available")) {
+            message = "Sorry, this book is no longer available."
+          }
+        } else {
+          const textError = await res.text()
+          message = textError || message
+          console.error("Error text:", textError)
         }
-      } else {
-        const textError = await res.text()
-        message = textError || message
-        console.error("Error text:", textError)
-      }
-      
-      if (res.status === 401) {
-        message = "Authentication failed. Please login again."
-        localStorage.removeItem("token")
-        sessionStorage.removeItem("token")
-      }
-      
-      throw new Error(message)
-    }
 
-    const orderData = await res.json()
-    console.log("Order created successfully:", orderData)
-    
-    // Fetch payment breakdown
-    const breakdownRes = await fetch(
-      `http://localhost:5279/api/Orders/${orderData.orderID}/payment-breakdown`,
-      {
-        headers: { "Authorization": `Bearer ${token}` }
+        if (res.status === 401) {
+          message = "Authentication failed. Please login again."
+          localStorage.removeItem("token")
+          sessionStorage.removeItem("token")
+        }
+
+        throw new Error(message)
       }
-    )
-    
-    if (!breakdownRes.ok) {
-      console.error("Payment breakdown fetch failed:", breakdownRes.status)
-      throw new Error("Failed to fetch payment breakdown")
+
+      const orderData = await res.json()
+      console.log("Order created successfully:", orderData)
+
+      // Fetch payment breakdown
+      const breakdownRes = await fetch(
+        `http://localhost:5279/api/Orders/${orderData.orderID}/payment-breakdown`,
+        {
+          headers: { "Authorization": `Bearer ${token}` }
+        }
+      )
+
+      if (!breakdownRes.ok) {
+        console.error("Payment breakdown fetch failed:", breakdownRes.status)
+        throw new Error("Failed to fetch payment breakdown")
+      }
+
+      const breakdownData = await breakdownRes.json()
+      console.log("Payment breakdown:", breakdownData)
+      setPaymentBreakdown(breakdownData)
+      setOrderConfirmed(true)
+    } catch (err: any) {
+      console.error("Order creation error:", err)
+      setError(err.message || "Failed to create order")
+    } finally {
+      setIsProcessing(false)
     }
-    
-    const breakdownData = await breakdownRes.json()
-    console.log("Payment breakdown:", breakdownData)
-    setPaymentBreakdown(breakdownData)
-    setOrderConfirmed(true)
-  } catch (err: any) {
-    console.error("Order creation error:", err)
-    setError(err.message || "Failed to create order")
-  } finally {
-    setIsProcessing(false)
   }
-}
 
   if (loading) {
     return (
@@ -330,7 +330,7 @@ const handleConfirmPurchase = async () => {
 
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Order Summary</h2>
-            
+
             <div className="border border-gray-200 rounded-lg p-6">
               {book.photoURLs && (
                 <div className="mb-4">
@@ -341,19 +341,19 @@ const handleConfirmPurchase = async () => {
                   />
                 </div>
               )}
-              
+
               <h3 className="text-lg font-semibold text-gray-900 mb-2">{book.title}</h3>
               <p className="text-gray-600 mb-1">by {book.author}</p>
               <p className="text-gray-600 mb-1">Seller: {book.userName}</p>
               <p className="text-gray-500 text-sm mb-4">{book.city}</p>
-              
+
               {book.isbn && (
                 <p className="text-gray-500 text-sm mb-1">ISBN: {book.isbn}</p>
               )}
               {book.edition && (
                 <p className="text-gray-500 text-sm mb-4">Edition: {book.edition}</p>
               )}
-              
+
               <div className="border-t border-gray-200 pt-4 mt-4">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-600">Book Price:</span>
@@ -387,7 +387,7 @@ const handleConfirmPurchase = async () => {
                 Cancel
               </Button>
             </Link>
-            <Button 
+            <Button
               onClick={handleConfirmPurchase}
               disabled={isProcessing || !book.isSellable}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400"
