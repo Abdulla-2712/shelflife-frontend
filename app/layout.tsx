@@ -8,8 +8,8 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "BookBridge - Buy, Sell, and Lend Books",
-  description: "A platform for buying, selling, and lending books easily",
+  title: "ShelfLife - Giving a Second Life to Books",
+  description: "A platform for buying and selling books easily",
   generator: "v0.app",
 }
 

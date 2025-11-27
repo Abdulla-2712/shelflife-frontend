@@ -46,9 +46,6 @@ export default function Header() {
             <span className="text-xl font-bold text-foreground">ShelfLife</span>
           </Link>
           <nav className="hidden md:flex items-center gap-8">
-            <Link href="/" className="text-foreground hover:text-primary transition">
-              Home
-            </Link>
             <Link href="/browse" className="text-foreground hover:text-primary transition">
               Browse Books
             </Link>
@@ -66,7 +63,7 @@ export default function Header() {
   return (
     <header className="bg-card border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href={isLoggedIn ? "/browse" : "/"} className="flex items-center gap-2">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground font-bold">
             B
           </div>
@@ -75,9 +72,11 @@ export default function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
-          <Link href="/" className="text-foreground hover:text-primary transition">
-            Home
-          </Link>
+          {isLoggedIn && (
+            <Link href="/dashboard" className="text-foreground hover:text-primary transition">
+              Dashboard
+            </Link>
+          )}
           <Link href="/browse" className="text-foreground hover:text-primary transition">
             Browse Books
           </Link>
@@ -109,9 +108,11 @@ export default function Header() {
         {isOpen && (
           <nav className="absolute top-full left-0 right-0 bg-card border-b border-border md:hidden">
             <div className="flex flex-col gap-4 p-4">
-              <Link href="/" className="text-foreground hover:text-primary transition">
-                Home
-              </Link>
+              {isLoggedIn && (
+                <Link href="/dashboard" className="text-foreground hover:text-primary transition">
+                  Dashboard
+                </Link>
+              )}
               <Link href="/browse" className="text-foreground hover:text-primary transition">
                 Browse Books
               </Link>

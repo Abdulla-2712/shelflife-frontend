@@ -12,7 +12,7 @@ export default function Home() {
       <section className="bg-gradient-to-r from-primary to-accent py-16 px-4 text-center">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-5xl font-bold text-primary-foreground mb-4">
-            Buy, Sell, or Lend Books Easily
+            Giving a second life to books
           </h1>
           <p className="text-lg text-primary-foreground/90 mb-8">
             Connect with book lovers in your community. Find your next favorite read or share your collection.
