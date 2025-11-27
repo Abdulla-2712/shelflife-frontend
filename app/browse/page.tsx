@@ -9,7 +9,7 @@ interface Book {
   bookListingID: number
   title: string
   author: string
-  userName: string
+  ownerName: string  // Changed from userName to ownerName
   price: number
   city: string
   photoURLs?: string
@@ -138,7 +138,7 @@ export default function BrowsePage() {
               <div className="p-4">
                 <h3 className="font-semibold text-lg mb-1">{book.title}</h3>
                 <p className="text-sm text-muted-foreground mb-2">{book.author}</p>
-                <p className="text-sm text-muted-foreground mb-4">Seller: {book.userName}</p>
+                <p className="text-sm text-muted-foreground mb-4">Seller: {book.ownerName}</p>
 
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-lg font-bold text-primary">${book.price}</span>
