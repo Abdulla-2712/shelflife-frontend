@@ -29,8 +29,16 @@ export default function Header() {
     }
   }, [])
 
+  // Check if user is a business/organization
+  const isOrganization = () => {
+    const userType = localStorage.getItem("userType")
+    return userType === "BUSINESS"
+  }
+
   const handleLogout = () => {
     localStorage.removeItem("token")
+    localStorage.removeItem("userType")
+    localStorage.removeItem("userId")
     setIsLoggedIn(false)
     window.location.href = "/"
   }
@@ -63,7 +71,8 @@ export default function Header() {
   return (
     <header className="bg-card border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-        <Link href={isLoggedIn ? "/browse" : "/"} className="flex items-center gap-2">
+        {/* Logo - redirects based on user type */}
+        <Link href={isLoggedIn ? (isOrganization() ? "/org-dashboard" : "/browse") : "/"} className="flex items-center gap-2">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground font-bold">
             B
           </div>
@@ -72,14 +81,19 @@ export default function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
-          {isLoggedIn && (
+          {/* Dashboard link - only for normal users */}
+          {isLoggedIn && !isOrganization() && (
             <Link href="/dashboard" className="text-foreground hover:text-primary transition">
               Dashboard
             </Link>
           )}
-          <Link href="/browse" className="text-foreground hover:text-primary transition">
-            Browse Books
-          </Link>
+
+          {/* Browse Books - hidden for business users */}
+          {!isOrganization() && (
+            <Link href="/browse" className="text-foreground hover:text-primary transition">
+              Browse Books
+            </Link>
+          )}
 
           {isLoggedIn ? (
             <Button onClick={handleLogout} variant="outline" className="hover:bg-destructive hover:text-destructive-foreground">
@@ -108,14 +122,19 @@ export default function Header() {
         {isOpen && (
           <nav className="absolute top-full left-0 right-0 bg-card border-b border-border md:hidden">
             <div className="flex flex-col gap-4 p-4">
-              {isLoggedIn && (
+              {/* Dashboard link - only for normal users */}
+              {isLoggedIn && !isOrganization() && (
                 <Link href="/dashboard" className="text-foreground hover:text-primary transition">
                   Dashboard
                 </Link>
               )}
-              <Link href="/browse" className="text-foreground hover:text-primary transition">
-                Browse Books
-              </Link>
+
+              {/* Browse Books - hidden for business users */}
+              {!isOrganization() && (
+                <Link href="/browse" className="text-foreground hover:text-primary transition">
+                  Browse Books
+                </Link>
+              )}
 
               {isLoggedIn ? (
                 <Button onClick={handleLogout} variant="outline" className="w-full hover:bg-destructive hover:text-destructive-foreground">
