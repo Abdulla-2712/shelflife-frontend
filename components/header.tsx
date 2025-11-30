@@ -48,7 +48,7 @@ export default function Header() {
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground font-bold text-sm">
-              B
+              S
             </div>
             <span className="text-lg font-bold text-foreground">ShelfLife</span>
           </Link>
@@ -67,7 +67,7 @@ export default function Header() {
             className="flex items-center gap-2 hover:opacity-80 transition"
           >
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground font-bold text-sm">
-              B
+              S
             </div>
             <span className="text-lg font-bold text-foreground">ShelfLife</span>
           </Link>

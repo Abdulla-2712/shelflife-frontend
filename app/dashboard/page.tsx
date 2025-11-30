@@ -457,7 +457,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       <Header />
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
@@ -484,7 +484,7 @@ export default function DashboardPage() {
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-3 font-medium border-b-2 transition whitespace-nowrap ${
                 activeTab === tab
-                  ? "border-purple-600 text-purple-600"
+                  ? "border-blue-600 text-blue-600"
                   : "border-transparent text-gray-600 hover:text-gray-900"
               }`}
             >
@@ -543,11 +543,11 @@ export default function DashboardPage() {
                           <td className="px-6 py-4 font-medium text-gray-900">{book.title}</td>
                           <td className="px-6 py-4 text-gray-700">{book.author}</td>
                           <td className="px-6 py-4 text-sm font-mono text-gray-600">{book.isbn}</td>
-                          <td className="px-6 py-4 font-semibold text-purple-600">
+                          <td className="px-6 py-4 font-semibold text-blue-600">
                             ${book.price?.toFixed(2) ?? "0.00"}
                           </td>
                           <td className="px-6 py-4">
-                            <span className="inline-block px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                            <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
                               {book.availabilityStatus}
                             </span>
                           </td>
@@ -584,8 +584,8 @@ export default function DashboardPage() {
 
         {/* Sell a Book Tab */}
         {activeTab === "sell" && (
-          <Card className="border-purple-200 bg-white">
-            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50">
+          <Card className="border-blue-200 bg-white">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
               <CardTitle className="flex items-center gap-2">
                 <Upload className="w-5 h-5" />
                 List a Book for Sale
@@ -601,7 +601,7 @@ export default function DashboardPage() {
                       type="text"
                       value={sellFormData.isbn}
                       onChange={(e) => setSellFormData({ ...sellFormData, isbn: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       placeholder="Enter ISBN"
                       required
                     />
@@ -612,7 +612,7 @@ export default function DashboardPage() {
                       type="text"
                       value={sellFormData.title}
                       onChange={(e) => setSellFormData({ ...sellFormData, title: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       placeholder="Enter book title"
                       required
                     />
@@ -625,7 +625,7 @@ export default function DashboardPage() {
                       type="text"
                       value={sellFormData.author}
                       onChange={(e) => setSellFormData({ ...sellFormData, author: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       placeholder="Enter author name"
                       required
                     />
@@ -636,7 +636,7 @@ export default function DashboardPage() {
                       type="text"
                       value={sellFormData.edition}
                       onChange={(e) => setSellFormData({ ...sellFormData, edition: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       placeholder="e.g., 2nd Edition"
                     />
                   </div>
@@ -648,7 +648,7 @@ export default function DashboardPage() {
                       type="number"
                       value={sellFormData.price}
                       onChange={(e) => setSellFormData({ ...sellFormData, price: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       placeholder="0.00"
                       step="0.01"
                       required
@@ -659,7 +659,7 @@ export default function DashboardPage() {
                     <select
                       value={sellFormData.condition}
                       onChange={(e) => setSellFormData({ ...sellFormData, condition: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       required
                     >
                       <option value="good">Good</option>
@@ -674,7 +674,7 @@ export default function DashboardPage() {
                     type="text"
                     value={sellFormData.city}
                     onChange={(e) => setSellFormData({ ...sellFormData, city: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     placeholder="Enter city"
                   />
                 </div>
@@ -683,7 +683,7 @@ export default function DashboardPage() {
                   <textarea
                     value={sellFormData.description}
                     onChange={(e) => setSellFormData({ ...sellFormData, description: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     placeholder="Describe the book's condition, any notes, defects, etc."
                     rows={4}
                   />
@@ -694,7 +694,7 @@ export default function DashboardPage() {
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                   />
                   {imagePreview && (
                     <div className="mt-4">
@@ -709,7 +709,7 @@ export default function DashboardPage() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full md:w-auto bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 rounded-lg gap-2 transition"
+                  className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg gap-2 transition"
                   disabled={loading}
                 >
                   <Plus className="w-4 h-4" />
@@ -731,7 +731,7 @@ export default function DashboardPage() {
                 onClick={() => setActiveOrdersTab("incoming")}
                 className={`px-4 py-3 font-medium border-b-2 transition ${
                   activeOrdersTab === "incoming"
-                    ? "border-purple-600 text-purple-600"
+                    ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-600 hover:text-gray-900"
                 }`}
               >
@@ -741,7 +741,7 @@ export default function DashboardPage() {
                 onClick={() => setActiveOrdersTab("outgoing")}
                 className={`px-4 py-3 font-medium border-b-2 transition ${
                   activeOrdersTab === "outgoing"
-                    ? "border-purple-600 text-purple-600"
+                    ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-600 hover:text-gray-900"
                 }`}
               >
@@ -778,7 +778,7 @@ export default function DashboardPage() {
                                 </p>
                               </div>
                               <div className="text-right">
-                                <p className="text-2xl font-bold text-purple-600">
+                                <p className="text-2xl font-bold text-blue-600">
                                   ${order.totalPrice?.toFixed(2) ?? "0.00"}
                                 </p>
                                 <div
@@ -855,7 +855,7 @@ export default function DashboardPage() {
                                 </p>
                               </div>
                               <div className="text-right">
-                                <p className="text-2xl font-bold text-purple-600">
+                                <p className="text-2xl font-bold text-blue-600">
                                   ${order.totalPrice?.toFixed(2) ?? "0.00"}
                                 </p>
                                 <div
@@ -907,7 +907,7 @@ export default function DashboardPage() {
         {showEditModal && editingBook && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
                 <CardTitle>Edit Book</CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
@@ -919,7 +919,7 @@ export default function DashboardPage() {
                         type="text"
                         value={editingBook.title}
                         onChange={(e) => setEditingBook({ ...editingBook, title: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       />
                     </div>
                     <div>
@@ -928,7 +928,7 @@ export default function DashboardPage() {
                         type="text"
                         value={editingBook.author}
                         onChange={(e) => setEditingBook({ ...editingBook, author: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       />
                     </div>
                   </div>
@@ -939,7 +939,7 @@ export default function DashboardPage() {
                         type="number"
                         value={editingBook.price}
                         onChange={(e) => setEditingBook({ ...editingBook, price: Number.parseFloat(e.target.value) })}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                         step="0.01"
                       />
                     </div>
@@ -948,7 +948,7 @@ export default function DashboardPage() {
                       <select
                         value={editingBook.condition}
                         onChange={(e) => setEditingBook({ ...editingBook, condition: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       >
                         <option value="good">Good</option>
                         <option value="like-new">Like New</option>
@@ -961,7 +961,7 @@ export default function DashboardPage() {
                     <textarea
                       value={editingBook.description}
                       onChange={(e) => setEditingBook({ ...editingBook, description: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       rows={4}
                     />
                   </div>
@@ -972,7 +972,7 @@ export default function DashboardPage() {
                     <Button
                       onClick={handleUpdateBook}
                       disabled={loading}
-                      className="bg-purple-600 hover:bg-purple-700 text-white px-6"
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6"
                     >
                       {loading ? "Saving..." : "Save Changes"}
                     </Button>

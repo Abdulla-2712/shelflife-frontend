@@ -451,7 +451,7 @@ export default function OrgDashboardPage() {
               onClick={() => setActiveTab(tab as "books" | "incoming" | "sold")}
               className={`px-4 py-3 font-medium border-b-2 transition ${
                 activeTab === tab
-                  ? "border-indigo-600 text-indigo-600"
+                  ? "border-blue-600 text-blue-600"
                   : "border-transparent text-gray-600 hover:text-gray-900"
               }`}
             >
@@ -464,8 +464,8 @@ export default function OrgDashboardPage() {
 
         {/* Add Book Form */}
         {showForm && (
-          <Card className="mb-8 border-indigo-200">
-            <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50">
+          <Card className="mb-8 border-blue-200">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
               <CardTitle className="flex items-center gap-2">
                 <Plus className="w-5 h-5" />
                 Add Book to Collection
@@ -483,7 +483,7 @@ export default function OrgDashboardPage() {
                       value={newBook.isbn}
                       onChange={(e) => setNewBook({ ...newBook, isbn: e.target.value })}
                       placeholder="978-0-7432-7356-5"
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       required
                     />
                   </div>
@@ -496,7 +496,7 @@ export default function OrgDashboardPage() {
                       value={newBook.title}
                       onChange={(e) => setNewBook({ ...newBook, title: e.target.value })}
                       placeholder="Enter book title"
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       required
                     />
                   </div>
@@ -511,7 +511,7 @@ export default function OrgDashboardPage() {
                       value={newBook.author}
                       onChange={(e) => setNewBook({ ...newBook, author: e.target.value })}
                       placeholder="Enter author name"
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       required
                     />
                   </div>
@@ -525,7 +525,7 @@ export default function OrgDashboardPage() {
                       value={newBook.price}
                       onChange={(e) => setNewBook({ ...newBook, price: e.target.value })}
                       placeholder="0.00"
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       required
                     />
                   </div>
@@ -538,7 +538,7 @@ export default function OrgDashboardPage() {
                     <select
                       value={newBook.condition}
                       onChange={(e) => setNewBook({ ...newBook, condition: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       required
                     >
                       <option value="Like New">Like New</option>
@@ -555,7 +555,7 @@ export default function OrgDashboardPage() {
                       value={newBook.edition}
                       onChange={(e) => setNewBook({ ...newBook, edition: e.target.value })}
                       placeholder="1st Edition"
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     />
                   </div>
                 </div>
@@ -566,7 +566,7 @@ export default function OrgDashboardPage() {
                     value={newBook.city}
                     onChange={(e) => setNewBook({ ...newBook, city: e.target.value })}
                     placeholder="Enter city"
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                   />
                 </div>
                 <div>
@@ -575,7 +575,7 @@ export default function OrgDashboardPage() {
                     value={newBook.description}
                     onChange={(e) => setNewBook({ ...newBook, description: e.target.value })}
                     placeholder="Enter book description"
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition h-24 resize-none"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition h-24 resize-none"
                   />
                 </div>
                 <div>
@@ -584,7 +584,7 @@ export default function OrgDashboardPage() {
                     type="file"
                     accept="image/jpeg,image/jpg,image/png,image/gif"
                     onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                   />
                   {photoFile && <p className="text-sm text-gray-600 mt-2">Selected: {photoFile.name}</p>}
                 </div>
@@ -598,13 +598,13 @@ export default function OrgDashboardPage() {
                     onChange={(e) => setNewBook({ ...newBook, quantity: e.target.value })}
                     placeholder="1"
                     min="1"
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     required
                   />
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition"
                   disabled={loading}
                 >
                   {loading ? "Adding..." : "Add Book"}
@@ -615,7 +615,7 @@ export default function OrgDashboardPage() {
         )}
 
         {!showForm && activeTab === "books" && (
-          <Button onClick={() => setShowForm(true)} className="mb-6 bg-indigo-600 hover:bg-indigo-700 text-white gap-2">
+          <Button onClick={() => setShowForm(true)} className="mb-6 bg-blue-600 hover:bg-blue-700 text-white gap-2">
             <Plus className="w-4 h-4" />
             Add Book
           </Button>
@@ -665,7 +665,7 @@ export default function OrgDashboardPage() {
                         <td className="px-6 py-4 font-medium text-gray-900">{book.title}</td>
                         <td className="px-6 py-4 text-gray-700">{book.author}</td>
                         <td className="px-6 py-4 text-sm font-mono text-gray-600">{book.isbn}</td>
-                        <td className="px-6 py-4 font-semibold text-indigo-600">${book.price.toFixed(2)}</td>
+                        <td className="px-6 py-4 font-semibold text-blue-600">${book.price.toFixed(2)}</td>
                         <td className="px-6 py-4">
                           <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
                             {book.condition}
@@ -723,7 +723,7 @@ export default function OrgDashboardPage() {
                         <p className="text-sm text-gray-500 mt-1">{new Date(order.orderDate).toLocaleDateString()}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-indigo-600">${(order.totalPrice || 0).toFixed(2)}</p>
+                        <p className="text-2xl font-bold text-blue-600">${(order.totalPrice || 0).toFixed(2)}</p>
                         <div
                           className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium mt-2 border ${getStatusColor(order.orderStatus)}`}
                         >
@@ -799,7 +799,7 @@ export default function OrgDashboardPage() {
                         <td className="px-6 py-4 font-mono text-gray-700">#{order.orderID}</td>
                         <td className="px-6 py-4 font-medium text-gray-900">{order.bookTitle}</td>
                         <td className="px-6 py-4 text-gray-700">{order.buyerName}</td>
-                        <td className="px-6 py-4 font-semibold text-indigo-600">${order.totalPrice.toFixed(2)}</td>
+                        <td className="px-6 py-4 font-semibold text-blue-600">${order.totalPrice.toFixed(2)}</td>
                         <td className="px-6 py-4 text-gray-600">{new Date(order.orderDate).toLocaleDateString()}</td>
                         <td className="px-6 py-4">
                           <span className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium border border-green-200">
@@ -820,7 +820,7 @@ export default function OrgDashboardPage() {
         {showEditModal && editingBook && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
                 <CardTitle>Edit Book</CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
@@ -832,7 +832,7 @@ export default function OrgDashboardPage() {
                         type="text"
                         value={editingBook.title}
                         onChange={(e) => setEditingBook({ ...editingBook, title: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       />
                     </div>
                     <div>
@@ -841,7 +841,7 @@ export default function OrgDashboardPage() {
                         type="text"
                         value={editingBook.author}
                         onChange={(e) => setEditingBook({ ...editingBook, author: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       />
                     </div>
                   </div>
@@ -853,7 +853,7 @@ export default function OrgDashboardPage() {
                         step="0.01"
                         value={editingBook.price}
                         onChange={(e) => setEditingBook({ ...editingBook, price: Number.parseFloat(e.target.value) })}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       />
                     </div>
                     <div>
@@ -862,7 +862,7 @@ export default function OrgDashboardPage() {
                         type="text"
                         value={editingBook.condition}
                         onChange={(e) => setEditingBook({ ...editingBook, condition: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       />
                     </div>
                   </div>
@@ -873,7 +873,7 @@ export default function OrgDashboardPage() {
                       value={editingBook.availableQuantity}
                       onChange={(e) => setEditingBook({ ...editingBook, availableQuantity: Number.parseInt(e.target.value) })}
                       min="0"
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     />
                   </div>
                   <div className="flex gap-2 justify-end pt-4 border-t border-gray-100">
@@ -883,7 +883,7 @@ export default function OrgDashboardPage() {
                     <Button
                       onClick={handleUpdateBook}
                       disabled={loading}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-6"
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6"
                     >
                       {loading ? "Saving..." : "Save Changes"}
                     </Button>
