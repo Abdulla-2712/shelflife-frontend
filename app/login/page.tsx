@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
 
   useEffect(() => {
     // Check if user is already logged in
@@ -27,6 +28,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setErrorMessage("") // Clear previous errors
 
     const payload = {
       email: email.trim(),
@@ -50,8 +52,9 @@ export default function LoginPage() {
         const userType = result.user.userType
         localStorage.setItem("userType", userType)
 
-        // Also store user ID for easy access
+        // Store user ID and name for easy access
         localStorage.setItem("userId", result.user.userID.toString())
+        localStorage.setItem("userName", result.user.name) // Add this line
 
         // Redirect based on user type
         if (userType === 'NORMAL_USER') {
@@ -63,12 +66,12 @@ export default function LoginPage() {
           window.location.href = "/"
         }
       } else {
-        alert(result.message || "Login failed")
+        setErrorMessage(result.message || "Login failed. Please check your credentials.")
         setLoading(false)
       }
     } catch (error) {
       console.error(error)
-      alert("Server error")
+      setErrorMessage("Server error. Please try again later.")
       setLoading(false)
     }
   }
@@ -110,6 +113,13 @@ export default function LoginPage() {
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={loading}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>
+
+            {/* Error Message */}
+            {errorMessage && (
+              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-center">
+                {errorMessage}
+              </div>
+            )}
           </form>
 
           <p className="text-center text-muted-foreground mt-6">

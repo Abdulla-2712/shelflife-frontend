@@ -3,15 +3,16 @@
 import type React from "react"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Header from "@/components/header"
-import { NextResponse } from "next/server"
-
-
 
 export default function RegisterPage() {
+  const router = useRouter()
   const [userType, setUserType] = useState<"NORMAL_USER" | "BUSINESS" | null>(null)
+  const [successMessage, setSuccessMessage] = useState("") // Add this
+  const [errorMessage, setErrorMessage] = useState("") // Add this
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -27,42 +28,48 @@ export default function RegisterPage() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSuccessMessage("") // Clear previous messages
+    setErrorMessage("")
 
-  const payload = {
-    userType,
-    email: formData.email,
-    password: formData.password,
-    phone: null,
-    name: formData.name,
-    Location: formData.location,
-    City: formData.city
-  }
-
-  try {
-    const response = await fetch("http://localhost:5279/api/Auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    })
-
-    const result = await response.json()
-
-    if (response.ok) {
-      alert("Account created successfully!")
-      console.log(result)
-    } else {
-      alert(result.message || "Registration failed")
+    const payload = {
+      userType,
+      email: formData.email,
+      password: formData.password,
+      phone: null,
+      name: formData.name,
+      Location: formData.location,
+      City: formData.city
     }
-  } catch (error) {
-    console.error(error)
-    alert("Server error")
-  }
-}
 
+    try {
+      const response = await fetch("http://localhost:5279/api/Auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        setSuccessMessage("Account created successfully! Redirecting to login...")
+        console.log(result)
+        
+        // Redirect after 2 seconds
+        setTimeout(() => {
+          router.push("/login")
+        }, 2000)
+      } else {
+        setErrorMessage(result.message || "Registration failed")
+      }
+    } catch (error) {
+      console.error(error)
+      setErrorMessage("Server error. Please try again.")
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -143,17 +150,16 @@ const handleSubmit = async (e: React.FormEvent) => {
               </div>
 
               <div>
-                  <label className="block text-sm font-medium mb-2">City</label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
+                <label className="block text-sm font-medium mb-2">City</label>
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                />
               </div>
-
 
               {userType === "BUSINESS" && (
                 <>
@@ -178,6 +184,20 @@ const handleSubmit = async (e: React.FormEvent) => {
                   Create Account
                 </Button>
               </div>
+
+              {/* Success Message */}
+              {successMessage && (
+                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800 text-center">
+                  {successMessage}
+                </div>
+              )}
+
+              {/* Error Message */}
+              {errorMessage && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-center">
+                  {errorMessage}
+                </div>
+              )}
             </form>
           )}
 
